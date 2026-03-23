@@ -26,9 +26,10 @@ const app = express();
 
 // Security
 app.use(helmet());
+const corsOrigin = process.env.VERCEL === '1' ? true : config.clientUrl;
 app.use(
   cors({
-    origin: config.clientUrl,
+    origin: corsOrigin,
     credentials: true,
   }),
 );
