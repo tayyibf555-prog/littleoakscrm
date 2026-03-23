@@ -49,15 +49,16 @@ export interface EmergencyContact {
   updatedAt: string;
 }
 
-export enum ConsentType {
-  PHOTO = 'PHOTO',
-  VIDEO = 'VIDEO',
-  OUTINGS = 'OUTINGS',
-  SUNSCREEN = 'SUNSCREEN',
-  MEDICATION = 'MEDICATION',
-  FACE_PAINTING = 'FACE_PAINTING',
-  SOCIAL_MEDIA = 'SOCIAL_MEDIA',
-}
+export const ConsentType = {
+  PHOTO: 'PHOTO',
+  VIDEO: 'VIDEO',
+  OUTINGS: 'OUTINGS',
+  SUNSCREEN: 'SUNSCREEN',
+  MEDICATION: 'MEDICATION',
+  FACE_PAINTING: 'FACE_PAINTING',
+  SOCIAL_MEDIA: 'SOCIAL_MEDIA',
+} as const;
+export type ConsentType = (typeof ConsentType)[keyof typeof ConsentType];
 
 export interface Consent {
   id: string;

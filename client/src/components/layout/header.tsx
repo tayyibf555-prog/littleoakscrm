@@ -19,11 +19,9 @@ export function Header() {
       <Separator orientation="vertical" className="h-6" />
       <div className="flex-1" />
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="gap-2">
-            <User className="size-4" />
-            <span className="hidden sm:inline">{user?.email}</span>
-          </Button>
+        <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="gap-2" />}>
+          <User className="size-4" />
+          <span className="hidden sm:inline">{user?.email}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={logout}>

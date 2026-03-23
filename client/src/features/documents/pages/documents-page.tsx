@@ -148,7 +148,7 @@ export function DocumentsPage() {
       />
 
       <div className="mb-4">
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+        <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v ?? '')}>
           <SelectTrigger className="w-48">
             <SelectValue />
           </SelectTrigger>

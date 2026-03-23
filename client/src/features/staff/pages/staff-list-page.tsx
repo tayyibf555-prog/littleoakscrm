@@ -7,8 +7,8 @@ import {
   flexRender,
   createColumnHelper,
 } from '@tanstack/react-table';
-import { format, parseISO, isBefore, addDays } from 'date-fns';
-import { Plus, Search, Shield } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { Plus, Search } from 'lucide-react';
 
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
@@ -142,7 +142,7 @@ export function StaffListPage() {
             className="pl-8"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? '')}>
           <SelectTrigger className="w-36">
             <SelectValue />
           </SelectTrigger>

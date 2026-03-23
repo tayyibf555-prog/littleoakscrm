@@ -138,7 +138,7 @@ export function InvoiceCreatePage() {
               </div>
               <div className="space-y-2">
                 <Label>Child</Label>
-                <Select value={childId} onValueChange={setChildId}>
+                <Select value={childId} onValueChange={(v) => setChildId(v ?? '')}>
                   <SelectTrigger><SelectValue placeholder="Select child" /></SelectTrigger>
                   <SelectContent>
                     {children?.map((c) => (

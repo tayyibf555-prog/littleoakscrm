@@ -227,7 +227,7 @@ export function DiaryPage() {
           />
         </div>
 
-        <Select value={childFilter} onValueChange={setChildFilter}>
+        <Select value={childFilter} onValueChange={(v) => setChildFilter(v ?? '')}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="All Children" />
           </SelectTrigger>
@@ -241,7 +241,7 @@ export function DiaryPage() {
           </SelectContent>
         </Select>
 
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
+        <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v ?? '')}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="All Types" />
           </SelectTrigger>
@@ -532,7 +532,7 @@ function CreateEntryForm({
       {/* Child selector */}
       <div className="space-y-2">
         <Label>Child *</Label>
-        <Select value={childId} onValueChange={setChildId}>
+        <Select value={childId} onValueChange={(v) => setChildId(v ?? '')}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select a child" />
           </SelectTrigger>
@@ -591,7 +591,7 @@ function CreateEntryForm({
         <div className="space-y-4 rounded-lg border p-3">
           <div className="space-y-2">
             <Label>Meal Type</Label>
-            <Select value={mealType} onValueChange={setMealType}>
+            <Select value={mealType} onValueChange={(v) => setMealType(v ?? '')}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select meal type" />
               </SelectTrigger>
@@ -606,7 +606,7 @@ function CreateEntryForm({
           </div>
           <div className="space-y-2">
             <Label>Amount Eaten</Label>
-            <Select value={mealAmount} onValueChange={setMealAmount}>
+            <Select value={mealAmount} onValueChange={(v) => setMealAmount(v ?? '')}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select amount" />
               </SelectTrigger>
@@ -644,7 +644,7 @@ function CreateEntryForm({
           </div>
           <div className="space-y-2">
             <Label>Quality</Label>
-            <Select value={napQuality} onValueChange={setNapQuality}>
+            <Select value={napQuality} onValueChange={(v) => setNapQuality(v ?? '')}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select quality" />
               </SelectTrigger>
@@ -664,7 +664,7 @@ function CreateEntryForm({
         <div className="space-y-4 rounded-lg border p-3">
           <div className="space-y-2">
             <Label>Nappy Type</Label>
-            <Select value={nappyType} onValueChange={setNappyType}>
+            <Select value={nappyType} onValueChange={(v) => setNappyType(v ?? '')}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>

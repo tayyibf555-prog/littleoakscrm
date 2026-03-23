@@ -150,7 +150,7 @@ export function TasksPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Assignee</Label>
-                  <Select value={assigneeId} onValueChange={setAssigneeId}>
+                  <Select value={assigneeId} onValueChange={(v) => setAssigneeId(v ?? '')}>
                     <SelectTrigger><SelectValue placeholder="Select staff member" /></SelectTrigger>
                     <SelectContent>
                       {staffList?.map((s) => (
@@ -190,7 +190,7 @@ export function TasksPage() {
       />
 
       <div className="mb-4">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? '')}>
           <SelectTrigger className="w-40">
             <SelectValue />
           </SelectTrigger>

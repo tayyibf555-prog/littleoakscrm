@@ -138,7 +138,7 @@ function InvoicesTab() {
   return (
     <div>
       <div className="mb-4 flex items-center gap-3">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? '')}>
           <SelectTrigger className="w-40">
             <SelectValue />
           </SelectTrigger>
@@ -651,7 +651,7 @@ function FundedHoursDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="fh-type">Funding Type</Label>
-              <Select value={fundingType} onValueChange={setFundingType}>
+              <Select value={fundingType} onValueChange={(v) => setFundingType(v ?? '')}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>

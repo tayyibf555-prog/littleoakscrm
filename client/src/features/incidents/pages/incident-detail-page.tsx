@@ -283,7 +283,7 @@ export function IncidentDetailPage() {
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label>Notification Method</Label>
-                        <Select value={notificationMethod} onValueChange={setNotificationMethod}>
+                        <Select value={notificationMethod} onValueChange={(v) => setNotificationMethod(v ?? '')}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="PHONE">Phone Call</SelectItem>

@@ -93,7 +93,7 @@ export function EyfsPage() {
         {childrenLoading ? (
           <Skeleton className="h-8 w-64" />
         ) : (
-          <Select value={selectedChildId} onValueChange={setSelectedChildId}>
+          <Select value={selectedChildId} onValueChange={(v) => setSelectedChildId(v ?? '')}>
             <SelectTrigger className="w-72">
               <SelectValue placeholder="Choose a child..." />
             </SelectTrigger>

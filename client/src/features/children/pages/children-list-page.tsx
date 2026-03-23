@@ -135,7 +135,7 @@ export function ChildrenListPage() {
             className="pl-8"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? '')}>
           <SelectTrigger className="w-36">
             <SelectValue />
           </SelectTrigger>

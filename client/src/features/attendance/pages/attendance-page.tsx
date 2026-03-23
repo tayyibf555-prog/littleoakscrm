@@ -191,7 +191,7 @@ export function AttendancePage() {
             className="w-44"
           />
         </div>
-        <Select value={roomFilter} onValueChange={setRoomFilter}>
+        <Select value={roomFilter} onValueChange={(v) => setRoomFilter(v ?? '')}>
           <SelectTrigger className="w-44">
             <SelectValue placeholder="All Rooms" />
           </SelectTrigger>
