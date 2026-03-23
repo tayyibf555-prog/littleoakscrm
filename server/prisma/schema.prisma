@@ -1,0 +1,822 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// AUTHENTICATION & USERS
+// ============================================================
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  STAFF
+  PARENT
+}
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  passwordHash        String
+  role                UserRole
+  isActive            Boolean   @default(true)
+  lastLoginAt         DateTime?
+  passwordResetToken  String?
+  passwordResetExpiry DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  staffProfile         Staff?
+  parentProfile        Parent?
+  auditLogs            AuditLog[]
+  createdAnnouncements Announcement[]
+  assignedTasks        Task[]            @relation("TaskAssignee")
+  createdTasks         Task[]            @relation("TaskCreator")
+  createdIncidents     Incident[]        @relation("IncidentReporter")
+  signedIncidents      Incident[]        @relation("IncidentSignoff")
+  diaryEntries         DiaryEntry[]
+  socialMediaPosts     SocialMediaPost[]
+  createdInvoices      Invoice[]
+
+  @@map("users")
+}
+
+// ============================================================
+// STAFF MANAGEMENT
+// ============================================================
+
+model Staff {
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  firstName          String
+  lastName           String
+  phone              String?
+  address            String?
+  dateOfBirth        DateTime?
+  startDate          DateTime
+  endDate            DateTime?
+  jobTitle           String
+  qualificationLevel Int?
+  photoUrl           String?
+  isActive           Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  user              User                 @relation(fields: [userId], references: [id])
+  dbsCheck          DbsCheck?
+  qualifications    Qualification[]
+  trainingRecords   TrainingRecord[]
+  shifts            Shift[]
+  staffAttendance   StaffAttendance[]
+  roomAssignments   RoomStaffAssignment[]
+
+  @@map("staff")
+}
+
+model DbsCheck {
+  id              String    @id @default(cuid())
+  staffId         String    @unique
+  dbsNumber       String
+  issueDate       DateTime
+  expiryDate      DateTime?
+  checkType       String
+  status          String
+  onUpdateService Boolean   @default(false)
+  lastCheckedDate DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  staff Staff @relation(fields: [staffId], references: [id])
+
+  @@map("dbs_checks")
+}
+
+model Qualification {
+  id             String    @id @default(cuid())
+  staffId        String
+  name           String
+  level          Int?
+  issuedBy       String?
+  dateObtained   DateTime?
+  expiryDate     DateTime?
+  certificateUrl String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  staff Staff @relation(fields: [staffId], references: [id])
+
+  @@map("qualifications")
+}
+
+model TrainingRecord {
+  id             String    @id @default(cuid())
+  staffId        String
+  title          String
+  provider       String?
+  completedDate  DateTime
+  expiryDate     DateTime?
+  certificateUrl String?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  staff Staff @relation(fields: [staffId], references: [id])
+
+  @@map("training_records")
+}
+
+model Shift {
+  id           String   @id @default(cuid())
+  staffId      String
+  date         DateTime @db.Date
+  startTime    DateTime
+  endTime      DateTime
+  breakMinutes Int      @default(0)
+  shiftType    String
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  staff Staff @relation(fields: [staffId], references: [id])
+
+  @@index([staffId, date])
+  @@map("shifts")
+}
+
+model StaffAttendance {
+  id           String    @id @default(cuid())
+  staffId      String
+  date         DateTime  @db.Date
+  checkInTime  DateTime?
+  checkOutTime DateTime?
+  status       String
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  staff Staff @relation(fields: [staffId], references: [id])
+
+  @@unique([staffId, date])
+  @@map("staff_attendance")
+}
+
+// ============================================================
+// ROOM MANAGEMENT
+// ============================================================
+
+model Room {
+  id            String   @id @default(cuid())
+  name          String
+  ageGroupMin   Int
+  ageGroupMax   Int
+  capacity      Int
+  ratioRequired String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  children         Child[]
+  staffAssignments RoomStaffAssignment[]
+
+  @@map("rooms")
+}
+
+model RoomStaffAssignment {
+  id        String   @id @default(cuid())
+  roomId    String
+  staffId   String
+  date      DateTime @db.Date
+  startTime DateTime
+  endTime   DateTime
+  createdAt DateTime @default(now())
+
+  room  Room  @relation(fields: [roomId], references: [id])
+  staff Staff @relation(fields: [staffId], references: [id])
+
+  @@index([roomId, date])
+  @@index([staffId, date])
+  @@map("room_staff_assignments")
+}
+
+// ============================================================
+// CHILD MANAGEMENT
+// ============================================================
+
+model Child {
+  id             String    @id @default(cuid())
+  firstName      String
+  lastName       String
+  preferredName  String?
+  dateOfBirth    DateTime
+  gender         String?
+  photoUrl       String?
+  roomId         String?
+  enrollmentDate DateTime
+  leavingDate    DateTime?
+  status         String    @default("ACTIVE")
+  ethnicity      String?
+  religion       String?
+  homeLanguage   String?
+  isEAL          Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  room               Room?              @relation(fields: [roomId], references: [id])
+  medicalInfo        MedicalInfo?
+  consents           Consent[]
+  emergencyContacts  EmergencyContact[]
+  parentLinks        ChildParent[]
+  attendance         ChildAttendance[]
+  diaryEntries       DiaryEntry[]
+  eyfsAssessments    EyfsAssessment[]
+  incidents          IncidentChild[]
+  invoiceItems       InvoiceItem[]
+  fundedHours        FundedHours?
+  socialMediaConsent SocialMediaConsent?
+
+  @@index([roomId])
+  @@index([status])
+  @@map("children")
+}
+
+model MedicalInfo {
+  id                String   @id @default(cuid())
+  childId           String   @unique
+  allergies         String?
+  dietaryNeeds      String?
+  medicalConditions String?
+  medications       String?
+  gpName            String?
+  gpPhone           String?
+  gpAddress         String?
+  healthVisitor     String?
+  specialNeeds      String?
+  senStatus         String?
+  ehcPlan           Boolean  @default(false)
+  additionalNotes   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@map("medical_info")
+}
+
+enum ConsentType {
+  PHOTO_INTERNAL
+  PHOTO_SOCIAL_MEDIA
+  PHOTO_MARKETING
+  TRIPS_LOCAL
+  TRIPS_TRANSPORT
+  SUNCREAM
+  NAPPY_CREAM
+  MEDICATION_ADMIN
+  FIRST_AID
+  EMERGENCY_TREATMENT
+}
+
+model Consent {
+  id          String      @id @default(cuid())
+  childId     String
+  consentType ConsentType
+  granted     Boolean
+  grantedBy   String
+  grantedDate DateTime
+  expiryDate  DateTime?
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, consentType])
+  @@map("consents")
+}
+
+model SocialMediaConsent {
+  id              String   @id @default(cuid())
+  childId         String   @unique
+  canPostPhotos   Boolean  @default(false)
+  canPostVideos   Boolean  @default(false)
+  canTagNursery   Boolean  @default(false)
+  platforms       String[]
+  parentSignature String?
+  signedDate      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@map("social_media_consents")
+}
+
+model EmergencyContact {
+  id                 String   @id @default(cuid())
+  childId            String
+  name               String
+  relationship       String
+  phone              String
+  phoneSecondary     String?
+  email              String?
+  isAuthorisedPickup Boolean  @default(false)
+  priority           Int
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId])
+  @@map("emergency_contacts")
+}
+
+// ============================================================
+// PARENT MANAGEMENT
+// ============================================================
+
+model Parent {
+  id             String   @id @default(cuid())
+  userId         String?  @unique
+  firstName      String
+  lastName       String
+  email          String?
+  phone          String
+  phoneSecondary String?
+  address        String?
+  relationship   String
+  isMainContact  Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user     User?         @relation(fields: [userId], references: [id])
+  children ChildParent[]
+  invoices Invoice[]
+
+  @@map("parents")
+}
+
+model ChildParent {
+  id                        String   @id @default(cuid())
+  childId                   String
+  parentId                  String
+  relationship              String
+  isPrimaryContact          Boolean  @default(false)
+  livesWithChild            Boolean  @default(true)
+  hasParentalResponsibility Boolean  @default(true)
+  createdAt                 DateTime @default(now())
+
+  child  Child  @relation(fields: [childId], references: [id], onDelete: Cascade)
+  parent Parent @relation(fields: [parentId], references: [id])
+
+  @@unique([childId, parentId])
+  @@map("child_parents")
+}
+
+// ============================================================
+// ATTENDANCE
+// ============================================================
+
+model ChildAttendance {
+  id                String    @id @default(cuid())
+  childId           String
+  date              DateTime  @db.Date
+  expectedArrival   DateTime?
+  expectedDeparture DateTime?
+  checkInTime       DateTime?
+  checkOutTime      DateTime?
+  checkedInBy       String?
+  checkedOutBy      String?
+  status            String    @default("EXPECTED")
+  absenceReason     String?
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, date])
+  @@index([date])
+  @@map("child_attendance")
+}
+
+// ============================================================
+// DAILY DIARY
+// ============================================================
+
+enum DiaryEntryType {
+  MEAL
+  NAP
+  NAPPY
+  ACTIVITY
+  OBSERVATION
+  MILESTONE
+  NOTE
+  MEDICATION_GIVEN
+}
+
+model DiaryEntry {
+  id        String         @id @default(cuid())
+  childId   String
+  authorId  String
+  date      DateTime       @db.Date
+  time      DateTime
+  entryType DiaryEntryType
+  content   Json
+  photoUrls String[]
+  isPrivate Boolean        @default(false)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  child  Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+  author User  @relation(fields: [authorId], references: [id])
+
+  @@index([childId, date])
+  @@index([date])
+  @@map("diary_entries")
+}
+
+// ============================================================
+// EYFS MILESTONE TRACKING
+// ============================================================
+
+enum EyfsArea {
+  CL
+  PD
+  PSED
+  L
+  M
+  UW
+  EAD
+}
+
+model EyfsMilestone {
+  id          String   @id @default(cuid())
+  area        EyfsArea
+  ageRange    String
+  description String
+  sortOrder   Int
+  createdAt   DateTime @default(now())
+
+  assessments EyfsAssessment[]
+
+  @@map("eyfs_milestones")
+}
+
+model EyfsAssessment {
+  id                String   @id @default(cuid())
+  childId           String
+  milestoneId       String
+  status            String
+  assessedBy        String
+  assessedDate      DateTime
+  evidenceNotes     String?
+  evidencePhotoUrls String[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  child     Child         @relation(fields: [childId], references: [id], onDelete: Cascade)
+  milestone EyfsMilestone @relation(fields: [milestoneId], references: [id])
+
+  @@index([childId])
+  @@index([childId, milestoneId])
+  @@map("eyfs_assessments")
+}
+
+// ============================================================
+// INCIDENT REPORTING
+// ============================================================
+
+model Incident {
+  id               String    @id @default(cuid())
+  reportedById     String
+  date             DateTime
+  time             DateTime
+  location         String
+  incidentType     String
+  severity         String
+  description      String
+  actionTaken      String
+  witnessNames     String?
+  photoUrls        String[]
+  parentNotified   Boolean   @default(false)
+  parentNotifiedAt DateTime?
+  parentNotifiedBy String?
+  signedOffById    String?
+  signedOffAt      DateTime?
+  signoffNotes     String?
+  status           String    @default("OPEN")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  reportedBy User           @relation("IncidentReporter", fields: [reportedById], references: [id])
+  signedOffBy User?         @relation("IncidentSignoff", fields: [signedOffById], references: [id])
+  children    IncidentChild[]
+
+  @@index([date])
+  @@index([status])
+  @@map("incidents")
+}
+
+model IncidentChild {
+  id         String @id @default(cuid())
+  incidentId String
+  childId    String
+
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  child    Child    @relation(fields: [childId], references: [id])
+
+  @@unique([incidentId, childId])
+  @@map("incident_children")
+}
+
+// ============================================================
+// CALENDAR & EVENTS
+// ============================================================
+
+model CalendarEvent {
+  id             String    @id @default(cuid())
+  title          String
+  description    String?
+  startDate      DateTime
+  endDate        DateTime?
+  allDay         Boolean   @default(false)
+  eventType      String
+  isRecurring    Boolean   @default(false)
+  recurrenceRule String?
+  color          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([startDate])
+  @@map("calendar_events")
+}
+
+// ============================================================
+// COMMUNICATIONS
+// ============================================================
+
+model Announcement {
+  id          String    @id @default(cuid())
+  authorId    String
+  title       String
+  content     String
+  priority    String    @default("NORMAL")
+  isPinned    Boolean   @default(false)
+  publishedAt DateTime  @default(now())
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  author User @relation(fields: [authorId], references: [id])
+
+  @@index([publishedAt])
+  @@map("announcements")
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  assigneeId  String
+  createdById String
+  dueDate     DateTime?
+  priority    String    @default("MEDIUM")
+  status      String    @default("TODO")
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  assignee  User @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  createdBy User @relation("TaskCreator", fields: [createdById], references: [id])
+
+  @@index([assigneeId, status])
+  @@map("tasks")
+}
+
+// ============================================================
+// SOCIAL MEDIA
+// ============================================================
+
+model SocialMediaPost {
+  id               String    @id @default(cuid())
+  authorId         String
+  content          String
+  mediaUrls        String[]
+  platforms        String[]
+  scheduledFor     DateTime?
+  publishedAt      DateTime?
+  status           String    @default("DRAFT")
+  ayrsharePostId   String?
+  ayrshareResponse Json?
+  analyticsData    Json?
+  consentVerified  Boolean   @default(false)
+  childrenInPost   String[]
+  errorMessage     String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  author User @relation(fields: [authorId], references: [id])
+
+  @@index([status])
+  @@index([scheduledFor])
+  @@map("social_media_posts")
+}
+
+model SocialMediaAccount {
+  id          String    @id @default(cuid())
+  platform    String
+  accountName String
+  isConnected Boolean   @default(true)
+  connectedAt DateTime  @default(now())
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([platform])
+  @@map("social_media_accounts")
+}
+
+// ============================================================
+// INVOICING & BILLING
+// ============================================================
+
+model FundedHours {
+  id              String   @id @default(cuid())
+  childId         String   @unique
+  entitlementType String
+  weeklyHours     Float
+  termStart       DateTime
+  termEnd         DateTime
+  fundingReference String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@map("funded_hours")
+}
+
+model FeeSchedule {
+  id             String    @id @default(cuid())
+  name           String
+  sessionType    String
+  rate           Decimal   @db.Decimal(10, 2)
+  effectiveFrom  DateTime
+  effectiveUntil DateTime?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  invoiceItems InvoiceItem[]
+
+  @@map("fee_schedules")
+}
+
+model Invoice {
+  id              String    @id @default(cuid())
+  invoiceNumber   String    @unique
+  parentId        String
+  createdById     String
+  issueDate       DateTime
+  dueDate         DateTime
+  subtotal        Decimal   @db.Decimal(10, 2)
+  fundedDeduction Decimal   @db.Decimal(10, 2) @default(0)
+  discount        Decimal   @db.Decimal(10, 2) @default(0)
+  total           Decimal   @db.Decimal(10, 2)
+  status          String    @default("DRAFT")
+  paidAmount      Decimal   @db.Decimal(10, 2) @default(0)
+  paidDate        DateTime?
+  paymentMethod   String?
+  notes           String?
+  pdfUrl          String?
+  periodStart     DateTime
+  periodEnd       DateTime
+  reminderSentAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  parent    Parent        @relation(fields: [parentId], references: [id])
+  createdBy User          @relation(fields: [createdById], references: [id])
+  items     InvoiceItem[]
+  payments  Payment[]
+
+  @@index([parentId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id                String   @id @default(cuid())
+  invoiceId         String
+  childId           String
+  feeScheduleId     String?
+  description       String
+  quantity          Decimal  @db.Decimal(10, 2)
+  unitPrice         Decimal  @db.Decimal(10, 2)
+  total             Decimal  @db.Decimal(10, 2)
+  isFundedDeduction Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  invoice     Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  child       Child        @relation(fields: [childId], references: [id])
+  feeSchedule FeeSchedule? @relation(fields: [feeScheduleId], references: [id])
+
+  @@map("invoice_items")
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  invoiceId     String
+  amount        Decimal  @db.Decimal(10, 2)
+  paymentDate   DateTime
+  paymentMethod String
+  reference     String?
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+
+  @@map("payments")
+}
+
+// ============================================================
+// DOCUMENTS
+// ============================================================
+
+model Document {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  category    String
+  fileUrl     String
+  fileName    String
+  fileSize    Int
+  mimeType    String
+  uploadedBy  String
+  version     Int      @default(1)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@map("documents")
+}
+
+// ============================================================
+// GDPR & AUDIT
+// ============================================================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String?
+  details    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model GdprRequest {
+  id               String    @id @default(cuid())
+  requestType      String
+  requestedBy      String
+  requestedByEmail String
+  status           String    @default("PENDING")
+  entityType       String
+  entityId         String?
+  notes            String?
+  completedAt      DateTime?
+  completedBy      String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([status])
+  @@map("gdpr_requests")
+}
+
+// ============================================================
+// NURSERY SETTINGS
+// ============================================================
+
+model NurserySetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("nursery_settings")
+}
