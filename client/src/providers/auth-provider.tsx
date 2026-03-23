@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { authApi, type MeResponse } from '@/api/auth';
-import { setAccessToken } from '@/api/client';
+import { setAccessToken, setOnAuthFailure } from '@/api/client';
 
 interface AuthContextType {
   user: MeResponse | null;
@@ -15,6 +15,14 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<MeResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Register callback so interceptor can clear auth state without full page reload
+  useEffect(() => {
+    setOnAuthFailure(() => {
+      setUser(null);
+      setAccessToken(null);
+    });
+  }, []);
 
   // Try to restore session on mount
   useEffect(() => {

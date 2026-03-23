@@ -6,6 +6,7 @@ const api = axios.create({
 });
 
 let accessToken: string | null = null;
+let onAuthFailure: (() => void) | null = null;
 
 export function setAccessToken(token: string | null) {
   accessToken = token;
@@ -13,6 +14,10 @@ export function setAccessToken(token: string | null) {
 
 export function getAccessToken() {
   return accessToken;
+}
+
+export function setOnAuthFailure(callback: () => void) {
+  onAuthFailure = callback;
 }
 
 // Add auth header to requests
@@ -46,7 +51,15 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Skip interceptor for refresh requests — let them fail normally
+    // so AuthProvider's restoreSession catch block handles it
+    const isRefreshRequest = originalRequest.url?.includes('/auth/refresh');
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isRefreshRequest
+    ) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -70,7 +83,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         setAccessToken(null);
-        window.location.href = '/login';
+        if (onAuthFailure) onAuthFailure();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
