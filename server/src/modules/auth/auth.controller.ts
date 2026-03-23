@@ -2,10 +2,11 @@ import { Request, Response } from 'express';
 import { authService } from './auth.service';
 import { config } from '../../config';
 
+const isProduction = config.nodeEnv === 'production' || process.env.VERCEL === '1';
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: config.nodeEnv === 'production',
-  sameSite: 'strict' as const,
+  secure: isProduction,
+  sameSite: 'lax' as const,
   path: '/api/v1/auth/refresh',
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };

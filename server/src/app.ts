@@ -34,11 +34,12 @@ app.use(
   }),
 );
 
-// Rate limiting on auth routes
+// Rate limiting on auth routes (higher limit for serverless where state resets on cold start)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20,
+  max: 100,
   message: { error: 'Too many requests, please try again later' },
+  skipSuccessfulRequests: true,
 });
 
 // Body parsing
